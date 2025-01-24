@@ -1,39 +1,57 @@
 "use client"
 
-import { useFacility } from '@/contexts/FacilityContext'
+import { useState } from "react"
+import { Droplet, ThermometerSun, Activity } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useFacility } from "@/contexts/FacilityContext"
 
 export function PoolParameters() {
   const { selectedFacility } = useFacility()
-  const selectedPool = selectedFacility?.pools[0] // Default to first pool, you might want to add pool selection
+  const [selectedPoolId, setSelectedPoolId] = useState<string>("")
+  
+  const selectedPool = selectedFacility?.pools.find(p => p.id === selectedPoolId) || selectedFacility?.pools[0]
 
   return (
-    <div className="bg-white/5 rounded-lg p-6">
-      <h2 className="text-xl text-white mb-6">Pool Parameters</h2>
-      {selectedPool ? (
+    <div className="p-6 bg-[#001529] text-white rounded-lg">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold">Pool Parameters</h2>
+        <Select value={selectedPoolId} onValueChange={setSelectedPoolId}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select a pool" />
+          </SelectTrigger>
+          <SelectContent>
+            {selectedFacility?.pools.map((pool) => (
+              <SelectItem key={pool.id} value={pool.id}>
+                {pool.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      {selectedPool && (
         <div className="space-y-6">
           <div className="flex items-center space-x-4">
-            <div className="text-4xl text-white">{selectedPool.parameters.chlorine} ppm</div>
-            <div className="text-gray-400">
-              <div>Chlorine Level</div>
+            <Droplet className="w-6 h-6" />
+            <div>
+              <div className="text-2xl font-bold">{selectedPool.parameters.chlorine} ppm</div>
+              <div className="text-gray-400 text-sm">Chlorine Level</div>
             </div>
           </div>
-          
           <div className="flex items-center space-x-4">
-            <div className="text-4xl text-white">{selectedPool.parameters.pH}</div>
-            <div className="text-gray-400">
-              <div>pH Level</div>
+            <Activity className="w-6 h-6" />
+            <div>
+              <div className="text-2xl font-bold">{selectedPool.parameters.pH}</div>
+              <div className="text-gray-400 text-sm">pH Level</div>
             </div>
           </div>
-          
           <div className="flex items-center space-x-4">
-            <div className="text-4xl text-white">{selectedPool.parameters.temperature}°C</div>
-            <div className="text-gray-400">
-              <div>Water Temperature</div>
+            <ThermometerSun className="w-6 h-6" />
+            <div>
+              <div className="text-2xl font-bold">{selectedPool.parameters.temperature}°C</div>
+              <div className="text-gray-400 text-sm">Water Temperature</div>
             </div>
           </div>
         </div>
-      ) : (
-        <div className="text-gray-400">No pool selected</div>
       )}
     </div>
   )

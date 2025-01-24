@@ -1,11 +1,11 @@
 "use client"
 
-import { useFacility } from '@/contexts/FacilityContext'
+import { useFacility } from "@/contexts/FacilityContext"
 
 export function PoolStatus() {
   const { selectedFacility } = useFacility()
   
-  const poolStats = {
+  const stats = {
     total: selectedFacility?.pools.length || 0,
     optimal: selectedFacility?.pools.filter(p => 
       p.parameters.pH >= 7.2 && p.parameters.pH <= 7.6 &&
@@ -15,30 +15,39 @@ export function PoolStatus() {
       (p.parameters.pH < 7.2 || p.parameters.pH > 7.6) ||
       (p.parameters.chlorine < 1.0 || p.parameters.chlorine > 2.0)
     ).length || 0,
-    critical: 0, // Add your critical conditions logic
+    critical: 0
   }
 
   return (
-    <div className="bg-white/5 rounded-lg p-6">
-      <h2 className="text-xl text-white mb-6">Facility Pool Status</h2>
-      <div className="relative">
-        <div className="flex justify-center items-center">
-          <div className="text-6xl text-white">{poolStats.total}</div>
-          <div className="text-gray-400 ml-2">Total pools</div>
+    <div className="p-6 bg-[#001529] text-white rounded-lg">
+      <h2 className="text-lg font-semibold mb-4">Facility Pool Status</h2>
+      <div className="relative w-48 h-48 mx-auto">
+        <div className="absolute inset-0 flex items-center justify-center flex-col">
+          <div className="text-4xl font-bold">{stats.total}</div>
+          <div className="text-sm text-gray-400">Total pools</div>
         </div>
-        <div className="mt-6 space-y-2">
-          <div className="flex justify-between">
-            <span className="text-green-400">● Optimal</span>
-            <span className="text-white">{poolStats.optimal}</span>
+      </div>
+      <div className="mt-4 space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
+            <span>Optimal</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-yellow-400">● Needs Attention</span>
-            <span className="text-white">{poolStats.needsAttention}</span>
+          <span>{stats.optimal}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="w-3 h-3 rounded-full bg-yellow-500 mr-2"></div>
+            <span>Needs Attention</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-red-400">● Critical</span>
-            <span className="text-white">{poolStats.critical}</span>
+          <span>{stats.needsAttention}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="w-3 h-3 rounded-full bg-red-500 mr-2"></div>
+            <span>Critical</span>
           </div>
+          <span>{stats.critical}</span>
         </div>
       </div>
     </div>
