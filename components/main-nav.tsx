@@ -9,14 +9,14 @@ const navItems = [
   { href: "/monitoring", label: "Monitoring" },
   { href: "/reports", label: "Reports" },
   { href: "/pools", label: "Pools" },
-  { href: "/equipment", label: "Equipment" },
+  { href: "/equipment", label: "Equipment" }
 ]
 
 export function MainNav() {
   const pathname = usePathname()
 
   return (
-    <nav className="bg-[#001529] border-b border-white/10">
+    <header className="bg-[#001529] border-b border-white/10">
       <div className="max-w-screen-2xl mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
@@ -40,8 +40,12 @@ export function MainNav() {
               ))}
             </div>
           </div>
+          <div className="flex items-center space-x-4">
+            <button className="text-gray-300 hover:text-white">English</button>
+            <button className="text-gray-300 hover:text-white">VSbvk1967</button>
+          </div>
         </div>
       </div>
-    </nav>
+    </header>
   )
 } 
