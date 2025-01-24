@@ -2,7 +2,10 @@
 
 import { useState } from "react"
 import { useFacility } from "@/contexts/FacilityContext"
-import { AlertTriangle, Activity, Droplet, ThermometerSun, ChevronRight } from "lucide-react"
+import { 
+  AlertTriangle, Activity, Droplet, ThermometerSun, 
+  ChevronRight, ChevronDown, Building 
+} from "lucide-react"
 import Link from "next/link"
 
 interface PoolWithFacility {
@@ -13,31 +16,15 @@ interface PoolWithFacility {
 
 export default function Monitoring() {
   const { facilities } = useFacility()
-  const [selectedPool, setSelectedPool] = useState<PoolWithFacility | null>(null)
+  const [selectedPool, setSelectedPool] = useState<any>(null)
+  const [expandedFacilities, setExpandedFacilities] = useState<string[]>([])
 
-  // Flatten pools with facility info for the list
-  const allPools = facilities.flatMap(facility => 
-    facility.pools.map(pool => ({
-      facilityName: facility.name,
-      facilityLocation: facility.location,
-      pool
-    }))
-  )
-
-  const getParameterStatus = (parameter: string, value: number) => {
-    switch (parameter) {
-      case 'chlorine':
-        return value < 1.0 || value > 3.0 ? 'critical' :
-               value < 1.5 || value > 2.5 ? 'warning' : 'normal'
-      case 'pH':
-        return value < 7.2 || value > 7.8 ? 'critical' :
-               value < 7.4 || value > 7.6 ? 'warning' : 'normal'
-      case 'temperature':
-        return value < 24 || value > 32 ? 'critical' :
-               value < 26 || value > 30 ? 'warning' : 'normal'
-      default:
-        return 'normal'
-    }
+  const toggleFacility = (facilityId: string) => {
+    setExpandedFacilities(current => 
+      current.includes(facilityId)
+        ? current.filter(id => id !== facilityId)
+        : [...current, facilityId]
+    )
   }
 
   return (
@@ -45,56 +32,64 @@ export default function Monitoring() {
       <h1 className="text-2xl font-bold mb-6">System Monitoring</h1>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Panel - Pool List */}
+        {/* Left Panel - Facilities and Pools List */}
         <div className="bg-white/5 rounded-lg p-4 max-h-[80vh] overflow-y-auto">
           <div className="sticky top-0 bg-[#001529] pb-2 mb-2">
-            <h2 className="text-xl font-semibold">Pools Overview</h2>
+            <h2 className="text-xl font-semibold">Facilities Overview</h2>
           </div>
           <div className="space-y-2">
-            {allPools.map((poolInfo) => {
-              const criticalIssues = [
-                getParameterStatus('chlorine', poolInfo.pool.parameters.chlorine),
-                getParameterStatus('pH', poolInfo.pool.parameters.pH),
-                getParameterStatus('temperature', poolInfo.pool.parameters.temperature)
-              ].filter(status => status === 'critical').length
-
-              return (
+            {facilities.map((facility) => (
+              <div key={facility.id} className="rounded-lg overflow-hidden">
                 <button
-                  key={poolInfo.pool.id}
-                  onClick={() => setSelectedPool(poolInfo)}
-                  className={`w-full text-left p-3 rounded-lg transition-colors ${
-                    selectedPool?.pool.id === poolInfo.pool.id 
-                      ? 'bg-white/20' 
-                      : 'bg-white/5 hover:bg-white/10'
-                  }`}
+                  onClick={() => toggleFacility(facility.id)}
+                  className="w-full p-3 bg-white/10 flex justify-between items-center"
                 >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <div className="font-medium">{poolInfo.pool.name}</div>
-                      <div className="text-sm text-gray-400">{poolInfo.facilityName}</div>
-                    </div>
-                    {criticalIssues > 0 ? (
-                      <AlertTriangle className="w-5 h-5 text-red-500" />
-                    ) : (
-                      <ChevronRight className="w-5 h-5 text-gray-400" />
-                    )}
+                  <div className="flex items-center">
+                    <Building className="w-5 h-5 mr-2" />
+                    <span>{facility.name}</span>
                   </div>
+                  {expandedFacilities.includes(facility.id) ? (
+                    <ChevronDown className="w-5 h-5" />
+                  ) : (
+                    <ChevronRight className="w-5 h-5" />
+                  )}
                 </button>
-              )
-            })}
+                
+                {expandedFacilities.includes(facility.id) && (
+                  <div className="ml-4 mt-1 space-y-1">
+                    {facility.pools.map((pool) => (
+                      <button
+                        key={pool.id}
+                        onClick={() => setSelectedPool({ pool, facilityName: facility.name })}
+                        className={`w-full p-2 rounded-lg text-left transition-colors ${
+                          selectedPool?.pool.id === pool.id
+                            ? 'bg-white/20'
+                            : 'hover:bg-white/10'
+                        }`}
+                      >
+                        <div className="flex justify-between items-center">
+                          <span>{pool.name}</span>
+                          {pool.parameters.chlorine < 1.0 || pool.parameters.pH < 7.2 && (
+                            <AlertTriangle className="w-4 h-4 text-red-500" />
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Right Panel - Pool Details */}
+        {/* Right Panel - Pool Details with Expandable Cards */}
         <div className="lg:col-span-2">
           {selectedPool ? (
             <div className="bg-white/5 rounded-lg p-6">
               <div className="flex justify-between items-center mb-6">
                 <div>
                   <h2 className="text-xl font-semibold">{selectedPool.pool.name}</h2>
-                  <div className="text-gray-400">
-                    {selectedPool.facilityName} - {selectedPool.facilityLocation}
-                  </div>
+                  <div className="text-gray-400">{selectedPool.facilityName}</div>
                 </div>
                 <Link 
                   href={`/pools/${selectedPool.pool.id}`}
@@ -104,67 +99,75 @@ export default function Monitoring() {
                 </Link>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div className={`p-4 rounded-lg ${
-                  getParameterStatus('chlorine', selectedPool.pool.parameters.chlorine) === 'critical' ? 'bg-red-500/20' :
-                  getParameterStatus('chlorine', selectedPool.pool.parameters.chlorine) === 'warning' ? 'bg-yellow-500/20' :
-                  'bg-green-500/20'
-                }`}>
-                  <Droplet className="w-6 h-6 mb-2" />
-                  <div className="text-2xl font-bold">{selectedPool.pool.parameters.chlorine.toFixed(1)}</div>
-                  <div className="text-gray-400">Chlorine (ppm)</div>
-                </div>
-
-                <div className={`p-4 rounded-lg ${
-                  getParameterStatus('pH', selectedPool.pool.parameters.pH) === 'critical' ? 'bg-red-500/20' :
-                  getParameterStatus('pH', selectedPool.pool.parameters.pH) === 'warning' ? 'bg-yellow-500/20' :
-                  'bg-green-500/20'
-                }`}>
-                  <Activity className="w-6 h-6 mb-2" />
-                  <div className="text-2xl font-bold">{selectedPool.pool.parameters.pH.toFixed(1)}</div>
-                  <div className="text-gray-400">pH Level</div>
-                </div>
-
-                <div className={`p-4 rounded-lg ${
-                  getParameterStatus('temperature', selectedPool.pool.parameters.temperature) === 'critical' ? 'bg-red-500/20' :
-                  getParameterStatus('temperature', selectedPool.pool.parameters.temperature) === 'warning' ? 'bg-yellow-500/20' :
-                  'bg-green-500/20'
-                }`}>
-                  <ThermometerSun className="w-6 h-6 mb-2" />
-                  <div className="text-2xl font-bold">{selectedPool.pool.parameters.temperature.toFixed(1)}°C</div>
-                  <div className="text-gray-400">Temperature</div>
+              {/* Water Parameters Section */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-4">Water Parameters</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <ParameterCard
+                    type="chlorine"
+                    value={selectedPool.pool.parameters.chlorine}
+                    icon={<Droplet className="w-6 h-6" />}
+                    unit="ppm"
+                  />
+                  <ParameterCard
+                    type="pH"
+                    value={selectedPool.pool.parameters.pH}
+                    icon={<Activity className="w-6 h-6" />}
+                    unit=""
+                  />
+                  <ParameterCard
+                    type="temperature"
+                    value={selectedPool.pool.parameters.temperature}
+                    icon={<ThermometerSun className="w-6 h-6" />}
+                    unit="°C"
+                  />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {selectedPool.pool.equipment.map((equipment: any) => (
-                  <div key={equipment.id} className="bg-white/5 p-4 rounded-lg">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="font-semibold">{equipment.name}</h3>
-                      <span className={`px-2 py-1 rounded text-sm ${
-                        equipment.status === 'running' ? 'bg-green-500/20 text-green-400' :
-                        'bg-red-500/20 text-red-400'
-                      }`}>
-                        {equipment.status}
-                      </span>
-                    </div>
-                    <div className="space-y-3">
-                      {equipment.sensors.map((sensor: any) => (
-                        <div key={sensor.id} className="flex justify-between items-center">
-                          <div className="text-gray-400">{sensor.type}</div>
-                          <div>{sensor.value.toFixed(1)} {sensor.unit}</div>
-                        </div>
+              {/* Equipment Sections */}
+              <div className="space-y-6">
+                {/* Pumps Section */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Pumps</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {selectedPool.pool.equipment
+                      .filter((eq: any) => eq.type === 'pump')
+                      .map((equipment: any) => (
+                        <EquipmentCard key={equipment.id} equipment={equipment} />
                       ))}
-                    </div>
                   </div>
-                ))}
+                </div>
+
+                {/* Filters Section */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Filters</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {selectedPool.pool.equipment
+                      .filter((eq: any) => eq.type === 'filter')
+                      .map((equipment: any) => (
+                        <EquipmentCard key={equipment.id} equipment={equipment} />
+                      ))}
+                  </div>
+                </div>
+
+                {/* Other Equipment */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Other Equipment</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {selectedPool.pool.equipment
+                      .filter((eq: any) => !['pump', 'filter'].includes(eq.type))
+                      .map((equipment: any) => (
+                        <EquipmentCard key={equipment.id} equipment={equipment} />
+                      ))}
+                  </div>
+                </div>
               </div>
             </div>
           ) : (
             <div className="bg-white/5 rounded-lg p-6 flex items-center justify-center h-full">
               <div className="text-center text-gray-400">
                 <div className="text-xl mb-2">Select a pool to view details</div>
-                <div className="text-sm">Choose a pool from the list on the left to see its parameters and equipment status</div>
+                <div className="text-sm">Choose a facility and pool from the list on the left</div>
               </div>
             </div>
           )}
