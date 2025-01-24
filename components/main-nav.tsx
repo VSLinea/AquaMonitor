@@ -14,6 +14,7 @@ const navItems = [
 
 export function MainNav() {
   const pathname = usePathname()
+  console.log('Current pathname:', pathname) // Debug log
 
   return (
     <header className="bg-[#001529] border-b border-white/10">
@@ -23,7 +24,7 @@ export function MainNav() {
             <Link href="/" className="text-white text-xl font-bold">
               AquaMonitor
             </Link>
-            <div className="ml-10 flex items-center space-x-4">
+            <nav className="ml-10 flex items-center space-x-4">
               {navItems.map((item) => (
                 <Link
                   key={item.href}
@@ -38,7 +39,7 @@ export function MainNav() {
                   {item.label}
                 </Link>
               ))}
-            </div>
+            </nav>
           </div>
           <div className="flex items-center space-x-4">
             <button className="text-gray-300 hover:text-white">English</button>

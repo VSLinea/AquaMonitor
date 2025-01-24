@@ -1,6 +1,10 @@
 "use client"
 
 import { useFacility } from "@/contexts/FacilityContext"
+import { FacilityProvider } from "@/contexts/FacilityContext"
+import { generateMockFacilities } from "@/lib/mock-data"
+import { RealTimeService } from "@/lib/real-time-service"
+import { Facility, Pool, Equipment, Sensor } from "@/types"
 
 export function PoolStatus() {
   const { selectedFacility } = useFacility()

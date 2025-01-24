@@ -34,7 +34,12 @@ export function FacilitySelector() {
                     setOpen(false)
                   }}
                 >
-                  <Check className={cn("mr-2 h-4 w-4", selectedFacility?.id === facility.id ? "opacity-100" : "opacity-0")} />
+                  <Check 
+                    className={cn(
+                      "mr-2 h-4 w-4", 
+                      selectedFacility?.id === facility.id ? "opacity-100" : "opacity-0"
+                    )} 
+                  />
                   {facility.name}
                 </CommandItem>
               ))}
