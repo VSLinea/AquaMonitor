@@ -14,9 +14,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>
+      <body className="min-h-screen bg-[#001529]">
         <MainNav />
-        {children}
+        <div className="container mx-auto px-4">
+          {children}
+        </div>
       </body>
     </html>
   )
