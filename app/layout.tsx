@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { MainNav } from '@/components/main-nav'
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: 'AquaMonitor',
+  description: 'Pool Monitoring System',
 }
 
 export default function RootLayout({
@@ -13,7 +14,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <MainNav />
+        {children}
+      </body>
     </html>
   )
 }
