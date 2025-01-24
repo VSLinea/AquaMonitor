@@ -1,11 +1,28 @@
 "use client"
 
+import { useState } from "react"
 import { useFacility } from "@/contexts/FacilityContext"
-import { AlertTriangle, Activity, Droplet, ThermometerSun } from "lucide-react"
+import { AlertTriangle, Activity, Droplet, ThermometerSun, ChevronRight } from "lucide-react"
 import Link from "next/link"
+
+interface PoolWithFacility {
+  facilityName: string
+  facilityLocation: string
+  pool: any // Using the Pool type from your types file
+}
 
 export default function Monitoring() {
   const { facilities } = useFacility()
+  const [selectedPool, setSelectedPool] = useState<PoolWithFacility | null>(null)
+
+  // Flatten pools with facility info for the list
+  const allPools = facilities.flatMap(facility => 
+    facility.pools.map(pool => ({
+      facilityName: facility.name,
+      facilityLocation: facility.location,
+      pool
+    }))
+  )
 
   const getParameterStatus = (parameter: string, value: number) => {
     switch (parameter) {
@@ -27,93 +44,131 @@ export default function Monitoring() {
     <div className="min-h-screen bg-[#001529] text-white p-6">
       <h1 className="text-2xl font-bold mb-6">System Monitoring</h1>
       
-      <div className="space-y-6">
-        {facilities.map((facility) => (
-          <div key={facility.id} className="bg-white/5 rounded-lg p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">{facility.name}</h2>
-              <span className="text-gray-400">{facility.location}</span>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {facility.pools.map((pool) => {
-                const criticalIssues = [
-                  getParameterStatus('chlorine', pool.parameters.chlorine),
-                  getParameterStatus('pH', pool.parameters.pH),
-                  getParameterStatus('temperature', pool.parameters.temperature)
-                ].filter(status => status === 'critical').length
-
-                const warningIssues = [
-                  getParameterStatus('chlorine', pool.parameters.chlorine),
-                  getParameterStatus('pH', pool.parameters.pH),
-                  getParameterStatus('temperature', pool.parameters.temperature)
-                ].filter(status => status === 'warning').length
-
-                return (
-                  <Link 
-                    href={`/pools/${pool.id}`}
-                    key={pool.id} 
-                    className="bg-white/5 p-4 rounded-lg hover:bg-white/10 transition-colors"
-                  >
-                    <div className="flex justify-between items-center mb-3">
-                      <div className="font-medium">{pool.name}</div>
-                      {(criticalIssues > 0 || warningIssues > 0) && (
-                        <AlertTriangle className={`w-5 h-5 ${
-                          criticalIssues > 0 ? 'text-red-500' : 'text-yellow-500'
-                        }`} />
-                      )}
-                    </div>
-                    
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className={`p-2 rounded ${
-                        getParameterStatus('chlorine', pool.parameters.chlorine) === 'critical' ? 'bg-red-500/20' :
-                        getParameterStatus('chlorine', pool.parameters.chlorine) === 'warning' ? 'bg-yellow-500/20' :
-                        'bg-green-500/20'
-                      }`}>
-                        <Droplet className="w-4 h-4 mb-1" />
-                        <div className="text-sm">{pool.parameters.chlorine.toFixed(1)}</div>
-                        <div className="text-xs text-gray-400">Chlorine</div>
-                      </div>
-                      
-                      <div className={`p-2 rounded ${
-                        getParameterStatus('pH', pool.parameters.pH) === 'critical' ? 'bg-red-500/20' :
-                        getParameterStatus('pH', pool.parameters.pH) === 'warning' ? 'bg-yellow-500/20' :
-                        'bg-green-500/20'
-                      }`}>
-                        <Activity className="w-4 h-4 mb-1" />
-                        <div className="text-sm">{pool.parameters.pH.toFixed(1)}</div>
-                        <div className="text-xs text-gray-400">pH</div>
-                      </div>
-                      
-                      <div className={`p-2 rounded ${
-                        getParameterStatus('temperature', pool.parameters.temperature) === 'critical' ? 'bg-red-500/20' :
-                        getParameterStatus('temperature', pool.parameters.temperature) === 'warning' ? 'bg-yellow-500/20' :
-                        'bg-green-500/20'
-                      }`}>
-                        <ThermometerSun className="w-4 h-4 mb-1" />
-                        <div className="text-sm">{pool.parameters.temperature.toFixed(1)}°C</div>
-                        <div className="text-xs text-gray-400">Temp</div>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 text-sm">
-                      <div className="flex justify-between text-gray-400">
-                        <span>Equipment</span>
-                        <span>{pool.equipment.length} units</span>
-                      </div>
-                      <div className="flex justify-between text-gray-400">
-                        <span>Sensors</span>
-                        <span>
-                          {pool.equipment.reduce((acc, eq) => acc + eq.sensors.length, 0)} active
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                )
-              })}
-            </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Panel - Pool List */}
+        <div className="bg-white/5 rounded-lg p-4 max-h-[80vh] overflow-y-auto">
+          <div className="sticky top-0 bg-[#001529] pb-2 mb-2">
+            <h2 className="text-xl font-semibold">Pools Overview</h2>
           </div>
-        ))}
+          <div className="space-y-2">
+            {allPools.map((poolInfo) => {
+              const criticalIssues = [
+                getParameterStatus('chlorine', poolInfo.pool.parameters.chlorine),
+                getParameterStatus('pH', poolInfo.pool.parameters.pH),
+                getParameterStatus('temperature', poolInfo.pool.parameters.temperature)
+              ].filter(status => status === 'critical').length
+
+              return (
+                <button
+                  key={poolInfo.pool.id}
+                  onClick={() => setSelectedPool(poolInfo)}
+                  className={`w-full text-left p-3 rounded-lg transition-colors ${
+                    selectedPool?.pool.id === poolInfo.pool.id 
+                      ? 'bg-white/20' 
+                      : 'bg-white/5 hover:bg-white/10'
+                  }`}
+                >
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="font-medium">{poolInfo.pool.name}</div>
+                      <div className="text-sm text-gray-400">{poolInfo.facilityName}</div>
+                    </div>
+                    {criticalIssues > 0 ? (
+                      <AlertTriangle className="w-5 h-5 text-red-500" />
+                    ) : (
+                      <ChevronRight className="w-5 h-5 text-gray-400" />
+                    )}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Right Panel - Pool Details */}
+        <div className="lg:col-span-2">
+          {selectedPool ? (
+            <div className="bg-white/5 rounded-lg p-6">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-xl font-semibold">{selectedPool.pool.name}</h2>
+                  <div className="text-gray-400">
+                    {selectedPool.facilityName} - {selectedPool.facilityLocation}
+                  </div>
+                </div>
+                <Link 
+                  href={`/pools/${selectedPool.pool.id}`}
+                  className="px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+                >
+                  View Details
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div className={`p-4 rounded-lg ${
+                  getParameterStatus('chlorine', selectedPool.pool.parameters.chlorine) === 'critical' ? 'bg-red-500/20' :
+                  getParameterStatus('chlorine', selectedPool.pool.parameters.chlorine) === 'warning' ? 'bg-yellow-500/20' :
+                  'bg-green-500/20'
+                }`}>
+                  <Droplet className="w-6 h-6 mb-2" />
+                  <div className="text-2xl font-bold">{selectedPool.pool.parameters.chlorine.toFixed(1)}</div>
+                  <div className="text-gray-400">Chlorine (ppm)</div>
+                </div>
+
+                <div className={`p-4 rounded-lg ${
+                  getParameterStatus('pH', selectedPool.pool.parameters.pH) === 'critical' ? 'bg-red-500/20' :
+                  getParameterStatus('pH', selectedPool.pool.parameters.pH) === 'warning' ? 'bg-yellow-500/20' :
+                  'bg-green-500/20'
+                }`}>
+                  <Activity className="w-6 h-6 mb-2" />
+                  <div className="text-2xl font-bold">{selectedPool.pool.parameters.pH.toFixed(1)}</div>
+                  <div className="text-gray-400">pH Level</div>
+                </div>
+
+                <div className={`p-4 rounded-lg ${
+                  getParameterStatus('temperature', selectedPool.pool.parameters.temperature) === 'critical' ? 'bg-red-500/20' :
+                  getParameterStatus('temperature', selectedPool.pool.parameters.temperature) === 'warning' ? 'bg-yellow-500/20' :
+                  'bg-green-500/20'
+                }`}>
+                  <ThermometerSun className="w-6 h-6 mb-2" />
+                  <div className="text-2xl font-bold">{selectedPool.pool.parameters.temperature.toFixed(1)}°C</div>
+                  <div className="text-gray-400">Temperature</div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {selectedPool.pool.equipment.map((equipment: any) => (
+                  <div key={equipment.id} className="bg-white/5 p-4 rounded-lg">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="font-semibold">{equipment.name}</h3>
+                      <span className={`px-2 py-1 rounded text-sm ${
+                        equipment.status === 'running' ? 'bg-green-500/20 text-green-400' :
+                        'bg-red-500/20 text-red-400'
+                      }`}>
+                        {equipment.status}
+                      </span>
+                    </div>
+                    <div className="space-y-3">
+                      {equipment.sensors.map((sensor: any) => (
+                        <div key={sensor.id} className="flex justify-between items-center">
+                          <div className="text-gray-400">{sensor.type}</div>
+                          <div>{sensor.value.toFixed(1)} {sensor.unit}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white/5 rounded-lg p-6 flex items-center justify-center h-full">
+              <div className="text-center text-gray-400">
+                <div className="text-xl mb-2">Select a pool to view details</div>
+                <div className="text-sm">Choose a pool from the list on the left to see its parameters and equipment status</div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
